@@ -1,20 +1,16 @@
-require('dotenv').config()
-
-const apiKey = process.env.API_KEY;
+const apiKey = '';
 const cityName = document.getElementById('city-name');
 const weatherState = document.getElementById('weather-state');
 const temperatrue = document.getElementById('temperature');
 const searchInput = document.getElementById('search-input');
 const submitBtn = document.getElementById('button');
 const forecastContainer = document.getElementById('forecast-container')
-const currentLocation = navigator.geolocation.getCurrentPosition((position) => {
-    let latitude = position.coords.latitude;
-    let longitude = position.coords.longitude;
-    return(latitude, longitude);
-});
+const currentLocation = 'Los Angeles'
 
 
 
+
+//create forecast elements to be injected by the live server.
 
 const addListener = (element,listenEvent) => {
     element.addEventListener(listenEvent, (event) => {
@@ -22,12 +18,10 @@ const addListener = (element,listenEvent) => {
     });
     
 }
-
 async function getWeather() {
     const response = await fetch(`http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${currentLocation}&aqi=no
     `);
     const data = await response.json();
-    console.log(data)
     return data;
 }
 
@@ -50,24 +44,74 @@ const updateTemperature = async () => {
 
 }
 
-const getSearch = async (event) => {
-    event.preventDefault();
+const getSearch = async () => {
+    // e.preventDefault();
     const searchData = searchInput.value;
-
-    await getForecast(searchData);
     return searchData
+
+    
 }
 
 
-async function getForecast(searchData) {
-    const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${searchData}`)
-    const data = await response.json()
-    console.log(data)
+async function getForecast() {
+    const searchData = await getSearch();
+    const response = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${searchData}&days=5`)
+    const data= await response.json()
+    return data
 }
 
-submitBtn.addEventListener('click', getSearch);
+
+const appendForecastDate = async (dayNumber) => {
+    const forecastDay = document.createElement('div');
+    const data = await getForecast();
+    forecastContainer.appendChild(forecastDay)
+    forecastDay.id = 'forecastDay' + dayNumber;
+    const dateDiv = document.createElement('div')
+    forecastDay.appendChild(dateDiv)
+    dateDiv.id = 'date' + dayNumber;
+    const date = data.forecast.forecastday[dayNumber].date;
+    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+    })
+    dateDiv.textContent = formattedDate
+}
+
+const appendTemeperature = async (dayNumber) => {
+    const data = await getForecast();
+    const temperatureDiv = document.createElement('div');
+    const dateDiv = document.getElementById(`date` + dayNumber)
+    dateDiv.appendChild(temperatureDiv);
+    temperatureDiv.textContent = `${data.forecast.forecastday[dayNumber].day.avgtemp_f} F`
+
+
+
+
+
+    
+
+}
+
+const updateForecast5Day = async () => {
+    appendForecastDate(0);
+    appendTemeperature(0);
+    appendForecastDate(1);
+    appendTemeperature(1);
+    appendForecastDate(2);
+    appendTemeperature(2);
+    appendForecastDate(3);
+    appendTemeperature(3);
+    appendForecastDate(4);
+    appendTemeperature(4);
+
+}
+
+submitBtn.addEventListener('click', async (e) => {
+    const searchData = await getSearch()
+    const forecast = await getForecast();
+    const updateForecast = updateForecast5Day();
+});
 updateCity();
 updateState();
 updateTemperature();
-
-
